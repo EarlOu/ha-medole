@@ -135,7 +135,7 @@ class MedoleModbusClient:
             time.sleep(self._min_delay - elapsed)
         self._last_request_time = time.time()
 
-    def _ensure_connection(self) -> bool:
+    async def _ensure_connection(self) -> bool:
         """Ensure the client is connected."""
         # Check if already connected using pymodbus's own connection tracking
         is_connected = False
@@ -154,7 +154,7 @@ class MedoleModbusClient:
 
         # Not connected, attempt to connect
         _LOGGER.debug("Modbus not connected, attempting to connect...")
-        if self.client.connect():
+        if await self.hass.async_add_executor_job(self.client.connect):
             _LOGGER.debug("Modbus connection established")
             return True
         else:
@@ -167,7 +167,7 @@ class MedoleModbusClient:
         """Read a register with proper connection handling and locking."""
         try:
             async with self.lock:
-                if not self._ensure_connection():
+                if not await self._ensure_connection():
                     return None
 
                 # Throttle requests to avoid overwhelming the device
@@ -213,7 +213,7 @@ class MedoleModbusClient:
         """Write a register with proper connection handling and locking."""
         try:
             async with self.lock:
-                if not self._ensure_connection():
+                if not await self._ensure_connection():
                     return False
 
                 # Throttle requests to avoid overwhelming the device
@@ -261,7 +261,7 @@ class MedoleModbusClient:
         """Write multiple registers with proper connection handling and locking."""
         try:
             async with self.lock:
-                if not self._ensure_connection():
+                if not await self._ensure_connection():
                     return False
 
                 # Throttle requests to avoid overwhelming the device
